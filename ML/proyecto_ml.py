@@ -70,3 +70,48 @@ for set_ in (train, test):
 # guardamos los datos de train y test
 train.to_csv("housing_train.csv", index=False)
 test.to_csv("housing_test.csv", index=False)
+
+import matplotlib as mpl
+
+mpl.rc("axes", labelsize=14)
+mpl.rc("xtick", labelsize=12)
+mpl.rc("ytick", labelsize=12)
+
+# cargamos el dataset de entrenamiento
+data = loadData("housing_train.csv")
+print(data.sample(10))
+
+data.info()
+
+# instancias de cada clase
+data_counts = data["ocean_proximity"].value_counts()
+print(data_counts)
+
+# estadísticas para valores numéricos
+print(data.describe())
+
+# estadísticas numéricas en gráficos
+data.hist(bins=50, figsize=(20, 15))
+plt.show()
+
+# gráfico de dispersión - scatter
+data.plot(
+    kind="scatter",
+    x="longitude",
+    y="latitude",
+    alpha=0.4,
+    s=data["population"] / 100,
+    label="population",
+    figsize=(10, 7),
+    c="median_house_value",
+    cmap=plt.get_cmap("jet"),
+    colorbar=True,
+    sharex=False,
+),
+plt.legend()
+plt.show()
+
+
+# buscando correlaciones
+corr_matrix = data.drop(columns=["ocean_proximity"]).corr()
+corr_matrix["median_house_value"].sort_values(ascending=False)
