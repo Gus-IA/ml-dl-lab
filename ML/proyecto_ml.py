@@ -239,3 +239,87 @@ full_pipeline = ColumnTransformer(
 )
 
 data_prepared = full_pipeline.fit_transform(data)
+
+
+# Selección del modelo
+
+from sklearn.linear_model import LinearRegression
+
+# instancia del modelo de regressión lineal con los datos y las etiquetas
+lin_reg = LinearRegression()
+lin_reg.fit(data_prepared, labels)
+
+# hacemos algunas predicciones
+some_data = data.iloc[:5]
+some_labels = labels.iloc[:5]
+some_data_prepared = full_pipeline.transform(some_data)
+
+print("Predictions:", lin_reg.predict(some_data_prepared))
+
+print("Labels:", list(some_labels))
+
+from sklearn.metrics import mean_squared_error
+
+# hacemos predicciones con el mean squared error
+predictions = lin_reg.predict(data_prepared)
+lin_mse = mean_squared_error(labels, predictions)
+lin_mse = np.sqrt(lin_mse)
+print(lin_mse)
+
+
+from sklearn.tree import DecisionTreeRegressor
+
+# instancia de álbol de decisión
+tree_reg = DecisionTreeRegressor(random_state=42)
+tree_reg.fit(data_prepared, labels)  # entrenamiento
+
+predictions = tree_reg.predict(data_prepared)
+tree_mse = mean_squared_error(labels, predictions)
+tree_rmse = np.sqrt(tree_mse)
+print(tree_rmse)
+
+from sklearn.model_selection import cross_val_score
+
+# Validación cruzada
+scores = cross_val_score(
+    tree_reg, data_prepared, labels, scoring="neg_mean_squared_error", cv=10
+)
+tree_rmse_scores = np.sqrt(-scores)
+
+
+# mostramos los resultados
+def display_scores(scores):
+    print("Scores:", scores)
+    print("Mean:", scores.mean())
+    print("Standard deviation:", scores.std())
+
+
+display_scores(tree_rmse_scores)
+
+
+lin_scores = cross_val_score(
+    lin_reg, data_prepared, labels, scoring="neg_mean_squared_error", cv=10
+)
+lin_rmse_scores = np.sqrt(-lin_scores)
+
+display_scores(lin_rmse_scores)
+
+
+from sklearn.ensemble import RandomForestRegressor
+
+# random forest
+forest_reg = RandomForestRegressor(n_estimators=10, random_state=42)
+forest_reg.fit(data_prepared, labels)
+predictions = forest_reg.predict(data_prepared)
+forest_mse = mean_squared_error(labels, predictions)
+forest_rmse = np.sqrt(forest_mse)
+print(forest_rmse)
+
+
+# resultados
+forest_scores = cross_val_score(
+    forest_reg, data_prepared, labels, scoring="neg_mean_squared_error", cv=10
+)
+forest_rmse_scores = np.sqrt(-forest_scores)
+
+display_scores(forest_rmse_scores)
