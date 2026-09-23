@@ -323,3 +323,57 @@ forest_scores = cross_val_score(
 forest_rmse_scores = np.sqrt(-forest_scores)
 
 display_scores(forest_rmse_scores)
+
+# Finetuning
+
+from sklearn.model_selection import GridSearchCV
+
+# búsqueda de hiperparámetros
+param_grid = [
+    # try 12 (3×4) combinations of hyperparameters
+    {"n_estimators": [3, 10, 30], "max_features": [2, 4, 6, 8]},
+    # then try 6 (2×3) combinations with bootstrap set as False
+    {"bootstrap": [False], "n_estimators": [3, 10], "max_features": [2, 3, 4]},
+]
+
+forest_reg = RandomForestRegressor(random_state=42)
+# train across 5 folds, that's a total of (12+6)*5=90 rounds of training
+grid_search = GridSearchCV(
+    forest_reg,
+    param_grid,
+    cv=5,
+    scoring="neg_mean_squared_error",
+    return_train_score=True,
+)
+grid_search.fit(data_prepared, labels)
+
+# mejores parámetros
+print(grid_search.best_params_)
+
+# mejor modelo
+print(grid_search.best_estimator_)
+
+cvres = grid_search.cv_results_
+for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+    print(np.sqrt(-mean_score), params)
+
+# importancia de las características
+feature_importances = grid_search.best_estimator_.feature_importances_
+print(feature_importances)
+
+
+# calculamos las métricas finales
+test_data = pd.read_csv("housing_test.csv")
+
+final_model = grid_search.best_estimator_
+
+X_test = test_data.drop("median_house_value", axis=1)
+y_test = test_data["median_house_value"].copy()
+
+X_test_prepared = full_pipeline.transform(X_test)
+final_predictions = final_model.predict(X_test_prepared)
+
+final_mse = mean_squared_error(y_test, final_predictions)
+final_rmse = np.sqrt(final_mse)
+
+print(final_rmse)
