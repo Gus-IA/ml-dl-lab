@@ -42,7 +42,6 @@ from sklearn.compose import ColumnTransformer
 import numpy as np
 
 # prepare the data
-
 rooms_ix, bedrooms_ix, population_ix, households_ix = 3, 4, 5, 6
 
 
@@ -83,11 +82,59 @@ full_pipeline = ColumnTransformer(
 data_prepared = full_pipeline.fit_transform(data)
 test_data_prepared = full_pipeline.transform(test_data)
 
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVR
 
 # modelo support vector machine
+param_grid = [
+    {"kernel": ["linear"], "C": [1.0, 10.0, 1000.0]},
+    {"kernel": ["rbf"], "C": [1.0, 10.0, 100.0]},
+    {"gamma": [0.01, 0.1, 1.0]},
+]
+
+svm_reg = SVR()
+grid_search = GridSearchCV(
+    svm_reg, param_grid, cv=3, scoring="neg_mean_squared_error", verbose=2
+)
+grid_search.fit(data_prepared, labels)
+
+
+negative_mse = grid_search.best_score_
+rmse = np.sqrt(-negative_mse)
+print(rmse)
+
+best_params = grid_search.best_params_
+print(best_params)
+
 
 # reemplazar gridsearchcv -> randomizedsearchcv
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import expon, reciprocal
 
+param_distribs = {
+    "kernel": ["linear", "rbf"],
+    "C": reciprocal(20, 200000),
+    "gamma": expon(scale=1.0),
+}
+
+svm_reg = SVR()
+rnd_search = RandomizedSearchCV(
+    svm_reg,
+    param_distributions=param_distribs,
+    n_iter=5,
+    cv=5,
+    scoring="neg_mean_squared_error",
+    verbose=2,
+    random_state=42,
+)
+rnd_search.fit(data_prepared, labels)
+
+negative_mse = rnd_search.best_score_
+rmse = np.sqrt(-negative_mse)
+print(rmse)
+
+best_params = rnd_search.best_params_
+print(best_params)
 
 feature_importances = np.array(
     [
@@ -112,5 +159,70 @@ feature_importances = np.array(
 
 
 # pipeline única
+def indices_of_top_k(arr, k):
+    return np.sort(np.argpartition(np.array(arr), -k)[-k:])
+
+
+class TopFeatureSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, feature_importances, k):
+        self.feature_importances = feature_importances
+        self.k = k
+
+    def fit(self, X, y=None):
+        self.feature_indices_ = indices_of_top_k(self.feature_importances, self.k)
+        return self
+
+    def transform(self, X):
+        return X[:, self.feature_indices_]
+
+
+k = 5
+
+preparation_and_feature_selection_pipeline = Pipeline(
+    [
+        ("preparation", full_pipeline),
+        ("feature_selection", TopFeatureSelector(feature_importances, k)),
+    ]
+)
+
+data_prepared_top_k_features = preparation_and_feature_selection_pipeline.fit_transform(
+    data
+)
+
+data_prepared_top_k_features[0:3]
+
+prepare_select_and_predict_pipeline = Pipeline(
+    [
+        ("preparation", full_pipeline),
+        ("feature_selection", TopFeatureSelector(feature_importances, k)),
+        ("svm_reg", SVR(**rnd_search.best_params_)),
+    ]
+)
+
+prepare_select_and_predict_pipeline.fit(data, labels)
+
+some_data = data.iloc[:4]
+some_labels = labels.iloc[:4]
+
+print("Predictions:\t", prepare_select_and_predict_pipeline.predict(some_data))
+print("Labels:\t\t", list(some_labels))
 
 # búsqueda de hiperparámetros de transformación
+param_grid = [
+    {
+        "preparation__num__imputer__strategy": ["mean", "median", "most_frequent"],
+        "feature_selection__k": list(range(1, len(feature_importances) + 1)),
+    }
+]
+
+grid_search_prep = GridSearchCV(
+    prepare_select_and_predict_pipeline,
+    param_grid,
+    cv=5,
+    scoring="neg_mean_squared_error",
+    verbose=2,
+)
+
+grid_search_prep.fit(data, labels)
+
+print(grid_search_prep.best_params_)
