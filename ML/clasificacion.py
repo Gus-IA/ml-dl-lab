@@ -43,3 +43,60 @@ plt.axis("off")
 plt.title(y[ix])
 plt.show()
 sgd_clf.predict([some_digit])
+
+# métricas de clasificación
+
+from sklearn.model_selection import cross_val_score
+
+# validación cruzada
+cross_val_score(sgd_clf, X_train, y_train_5, cv=3, scoring="accuracy")
+
+from sklearn.base import BaseEstimator
+import numpy as np
+
+
+class Never5Classifier(BaseEstimator):
+    def fit(self, X, y=None):
+        pass
+
+    def predict(self, X):
+        return np.zeros((len(X), 1), dtype=bool)
+
+
+never_5_clf = Never5Classifier()
+print(cross_val_score(never_5_clf, X_train, y_train_5, cv=3, scoring="accuracy"))
+
+# matrix de confusión
+from sklearn.model_selection import cross_val_predict
+
+y_train_pred = cross_val_predict(sgd_clf, X_train, y_train_5, cv=3)
+
+from sklearn.metrics import confusion_matrix
+
+confusion_matrix(y_train_5, y_train_pred)
+
+import seaborn as sns
+import pandas as pd
+
+# Convert confusion matrix to DataFrame for better visualization
+conf_matrix = confusion_matrix(y_train_5, y_train_pred)
+conf_df = pd.DataFrame(
+    conf_matrix, index=["False", "True"], columns=["Pred False", "Pred True"]
+)
+
+# Create a heatmap
+sns.heatmap(conf_df, annot=True, fmt="d", cmap="Blues", cbar=False, square=True)
+
+
+# métricas de precisión y de recall
+from sklearn.metrics import precision_score, recall_score
+
+print(precision_score(y_train_5, y_train_pred))
+
+print(recall_score(y_train_5, y_train_pred))
+
+
+# métricas de f1
+from sklearn.metrics import f1_score
+
+print(f1_score(y_train_5, y_train_pred))
