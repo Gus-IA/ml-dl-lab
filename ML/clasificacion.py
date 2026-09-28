@@ -100,3 +100,15 @@ print(recall_score(y_train_5, y_train_pred))
 from sklearn.metrics import f1_score
 
 print(f1_score(y_train_5, y_train_pred))
+
+# tradeoff
+y_scores = sgd_clf.decision_function([some_digit])
+print(y_scores)
+
+threshold = 0
+y_some_digit_pred = y_scores > threshold
+print(y_some_digit_pred)
+
+threshold = 8000
+y_some_digit_pred = y_scores > threshold
+print(y_some_digit_pred)
