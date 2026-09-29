@@ -112,3 +112,29 @@ print(y_some_digit_pred)
 threshold = 8000
 y_some_digit_pred = y_scores > threshold
 print(y_some_digit_pred)
+
+# clasificación multiclase
+
+from sklearn.svm import SVC  # OvO
+
+svm_clf = SVC(gamma="auto", random_state=42)
+svm_clf.fit(X_train[:1000], y_train[:1000])  # y_train, not y_train_5
+svm_clf.predict([some_digit])
+
+some_digit_scores = svm_clf.decision_function([some_digit])
+print(some_digit_scores)
+
+print(np.argmax(some_digit_scores))
+
+
+from sklearn.multiclass import OneVsRestClassifier  # OvR
+
+ovr_clf = OneVsRestClassifier(SVC(gamma="auto", random_state=42))
+ovr_clf.fit(X_train[:1000], y_train[:1000])
+ovr_clf.predict([some_digit])
+
+sgd_clf.fit(X_train, y_train)
+sgd_clf.predict([some_digit])
+
+some_digit_scores = sgd_clf.decision_function([some_digit])
+print(some_digit_scores)
