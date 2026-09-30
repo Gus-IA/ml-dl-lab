@@ -138,3 +138,38 @@ sgd_clf.predict([some_digit])
 
 some_digit_scores = sgd_clf.decision_function([some_digit])
 print(some_digit_scores)
+
+
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train.astype(np.float64))
+y_train_pred = cross_val_predict(sgd_clf, X_train_scaled[:3000], y_train[:3000], cv=3)
+conf_mx = confusion_matrix(y_train[:3000], y_train_pred[:3000])
+
+# dataframe de la matrix de confusión
+conf_df = pd.DataFrame(
+    conf_mx, index=[str(i) for i in range(10)], columns=[f"Pred {i}" for i in range(10)]
+)
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(conf_df, annot=True, fmt="d", cmap="Blues", cbar=True, square=True)
+plt.title("Confusion Matrix for MNIST Classes")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.tight_layout()
+plt.show()
+
+
+row_sums = conf_mx.sum(axis=1, keepdims=True)
+norm_conf_mx = conf_mx / row_sums
+
+# matriz de confusión normalizada
+np.fill_diagonal(norm_conf_mx, 0)
+plt.figure(figsize=(10, 8))
+sns.heatmap(norm_conf_mx, cmap="gray_r", annot=True, fmt=".2f", cbar=True)
+plt.title("Normalized Confusion Matrix")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.tight_layout()
+plt.show()
