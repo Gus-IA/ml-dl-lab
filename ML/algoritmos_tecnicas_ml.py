@@ -209,3 +209,140 @@ plt.xlabel("$x_1$", fontsize=18)
 plt.ylabel("$y$", rotation=0, fontsize=18)
 plt.axis([-3, 3, 0, 10])
 plt.show()
+
+
+# regresión logística
+t = np.linspace(-10, 10, 100)
+sig = 1 / (1 + np.exp(-t))
+plt.figure(figsize=(9, 3))
+plt.plot([-10, 10], [0, 0], "k-")
+plt.plot([-10, 10], [0.5, 0.5], "k:")
+plt.plot([-10, 10], [1, 1], "k:")
+plt.plot([0, 0], [-1.1, 1.1], "k-")
+plt.plot(t, sig, "b-", linewidth=2, label=r"$\sigma(t) = \frac{1}{1 + e^{-t}}$")
+plt.xlabel("t")
+plt.legend(loc="upper left", fontsize=20)
+plt.axis([-10, 10, -0.1, 1.1])
+plt.show()
+
+from sklearn import datasets
+
+# cargamos el dataset iris
+iris = datasets.load_iris()
+
+X = iris["data"][:, 3:]  # ancho pétalo
+y = (iris["target"] == 2).astype(int)  # clase 2
+
+from sklearn.linear_model import LogisticRegression
+
+# instancia modelo regresión Logística
+log_reg = LogisticRegression(solver="lbfgs", random_state=42)
+log_reg.fit(X, y)  # entrenamiento
+
+X_new = np.linspace(0, 3, 1000).reshape(-1, 1)
+y_proba = log_reg.predict_proba(X_new)
+decision_boundary = X_new[y_proba[:, 1] >= 0.5][0]
+
+# visualizamos los resultados
+plt.figure(figsize=(8, 3))
+plt.plot(X[y == 0], y[y == 0], "bs")
+plt.plot(X[y == 1], y[y == 1], "g^")
+plt.plot([decision_boundary, decision_boundary], [-1, 2], "k:", linewidth=2)
+plt.plot(X_new, y_proba[:, 1], "g-", linewidth=2, label="Iris virginica")
+plt.plot(X_new, y_proba[:, 0], "b--", linewidth=2, label="Not Iris virginica")
+plt.text(
+    decision_boundary + 0.02,
+    0.15,
+    "Decision  boundary",
+    fontsize=14,
+    color="k",
+    ha="center",
+)
+plt.annotate(
+    "",
+    xy=(decision_boundary - 0.3, 0.08),
+    xytext=(decision_boundary, 0.08),
+    arrowprops=dict(facecolor="b", edgecolor="b", width=2, headwidth=10, headlength=10),
+)
+plt.annotate(
+    "",
+    xy=(decision_boundary + 0.3, 0.92),
+    xytext=(decision_boundary, 0.92),
+    arrowprops=dict(facecolor="g", edgecolor="g", width=2, headwidth=10, headlength=10),
+)
+plt.xlabel("Petal width (cm)", fontsize=14)
+plt.ylabel("Probability", fontsize=14)
+plt.legend(loc="center left", fontsize=14)
+plt.axis([0, 3, -0.02, 1.02])
+plt.show()
+
+
+from sklearn.linear_model import LogisticRegression
+
+# entrenamos un segundo modelo con el ancho y largo del pétalo
+X = iris["data"][:, (2, 3)]  # petal length, petal width
+y = (iris["target"] == 2).astype(int)
+
+log_reg = LogisticRegression(
+    solver="lbfgs", C=10**10, random_state=42
+)  # instancia modelo
+log_reg.fit(X, y)  # entrenamiento
+
+
+from matplotlib.colors import ListedColormap
+
+
+# visualizamos el resultado
+def plot_decision_regions(X, y, classifier, test_idx=None, resolution=0.02):
+
+    # setup marker generator and color map
+    markers = ("s", "x", "o", "^", "v")
+    colors = ("red", "blue", "lightgreen", "gray", "cyan")
+    cmap = ListedColormap(colors[: len(np.unique(y))])
+
+    # plot the decision surface
+    x1_min, x1_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    x2_min, x2_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+    xx1, xx2 = np.meshgrid(
+        np.arange(x1_min, x1_max, resolution), np.arange(x2_min, x2_max, resolution)
+    )
+    Z = classifier.predict(np.array([xx1.ravel(), xx2.ravel()]).T)
+    Z = Z.reshape(xx1.shape)
+    plt.contourf(xx1, xx2, Z, alpha=0.3, cmap=cmap)
+    plt.xlim(xx1.min(), xx1.max())
+    plt.ylim(xx2.min(), xx2.max())
+
+    for idx, cl in enumerate(np.unique(y)):
+        plt.scatter(
+            x=X[y == cl, 0],
+            y=X[y == cl, 1],
+            alpha=0.8,
+            c=colors[idx],
+            marker=markers[idx],
+            label=cl,
+            edgecolor="black",
+        )
+
+    # highlight test examples
+    if test_idx:
+        # plot all examples
+        X_test, y_test = X[test_idx, :], y[test_idx]
+
+        plt.scatter(
+            X_test[:, 0],
+            X_test[:, 1],
+            c="",
+            edgecolor="black",
+            alpha=1.0,
+            linewidth=1,
+            marker="o",
+            s=100,
+            label="test set",
+        )
+
+
+plot_decision_regions(X, y, log_reg)
+plt.xlabel("petal length")
+plt.ylabel("petal width")
+plt.legend(loc="upper left")
+plt.show()
