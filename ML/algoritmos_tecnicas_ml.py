@@ -346,3 +346,24 @@ plt.xlabel("petal length")
 plt.ylabel("petal width")
 plt.legend(loc="upper left")
 plt.show()
+
+# regresión softmax
+
+# dataset iris
+X = iris["data"][:, (2, 3)]  # petal length, petal width
+y = iris["target"]
+softmax_reg = LogisticRegression(  # instanciamos el modelo softmax
+    multi_class="multinomial", solver="lbfgs", C=10, random_state=42
+)
+softmax_reg.fit(X, y)  # entrenamiento
+
+x = np.array([-4.35, 5.74, 8.16])
+s = np.exp(x) / np.exp(x).sum()
+print(s)
+
+# visualizamos el resultado
+plot_decision_regions(X, y, softmax_reg)
+plt.xlabel("petal length [standardized]")
+plt.ylabel("petal width [standardized]")
+plt.legend(loc="upper left")
+plt.show()
