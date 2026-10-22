@@ -71,3 +71,24 @@ plt.show()
 tree_clf.predict_proba([[5, 1.5]])
 
 tree_clf.predict([[5, 1.5]])
+
+# algoritmo CART
+
+from sklearn.datasets import make_moons
+
+Xm, ym = make_moons(n_samples=100, noise=0.25, random_state=53)
+
+deep_tree_clf1 = DecisionTreeClassifier(random_state=42)
+deep_tree_clf2 = DecisionTreeClassifier(min_samples_leaf=4, random_state=42)
+deep_tree_clf1.fit(Xm, ym)
+deep_tree_clf2.fit(Xm, ym)
+
+fig, axes = plt.subplots(ncols=2, figsize=(10, 4), sharey=True)
+plt.sca(axes[0])
+plot_decision_boundary(deep_tree_clf1, Xm, ym, axes=[-1.5, 2.4, -1, 1.5], iris=False)
+plt.title("No restrictions", fontsize=16)
+plt.sca(axes[1])
+plot_decision_boundary(deep_tree_clf2, Xm, ym, axes=[-1.5, 2.4, -1, 1.5], iris=False)
+plt.title("min_samples_leaf = {}".format(deep_tree_clf2.min_samples_leaf), fontsize=14)
+plt.ylabel("")
+plt.show()
