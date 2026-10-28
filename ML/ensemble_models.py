@@ -122,3 +122,65 @@ plot_decision_boundary(bag_clf, X, y)
 plt.title("Decision Trees with Bagging", fontsize=14)
 plt.ylabel("")
 plt.show()
+
+# Random forest
+from sklearn.ensemble import RandomForestClassifier
+
+# instancia randomforest
+rnd_clf = RandomForestClassifier(n_estimators=500, max_leaf_nodes=16, random_state=42)
+rnd_clf.fit(X_train, y_train)  # entrenamiento
+
+y_pred_rf = rnd_clf.predict(X_test)  # prediciones
+
+
+bag_clf = BaggingClassifier(
+    DecisionTreeClassifier(splitter="random", max_leaf_nodes=16, random_state=42),
+    n_estimators=500,
+    max_samples=1.0,
+    bootstrap=True,
+    random_state=42,
+)
+
+bag_clf.fit(X_train, y_train)
+y_pred = bag_clf.predict(X_test)
+
+np.sum(y_pred == y_pred_rf) / len(y_pred)  # casi igual
+
+from sklearn.datasets import load_iris
+
+iris = load_iris()  # dataset iris
+rnd_clf = RandomForestClassifier(n_estimators=500, random_state=42)
+rnd_clf.fit(iris["data"], iris["target"])
+for name, score in zip(
+    iris["feature_names"],
+    rnd_clf.feature_importances_,  # importancia relativa de cada una de las características
+):
+    print(name, score)
+
+from sklearn.datasets import fetch_openml
+
+# dataset mnist
+mnist = fetch_openml("mnist_784", version=1)
+mnist.target = mnist.target.astype(np.uint8)
+
+# instancia randomforest
+rnd_clf = RandomForestClassifier(n_estimators=100, random_state=42)
+rnd_clf.fit(mnist["data"], mnist["target"])  # entrenamiento
+
+import matplotlib as mpl
+
+
+# visualización
+def plot_digit(data):
+    image = data.reshape(28, 28)
+    plt.imshow(image, cmap=mpl.cm.hot, interpolation="nearest")
+    plt.axis("off")
+
+
+plot_digit(rnd_clf.feature_importances_)
+
+cbar = plt.colorbar(
+    ticks=[rnd_clf.feature_importances_.min(), rnd_clf.feature_importances_.max()]
+)
+cbar.ax.set_yticklabels(["Not important", "Very important"])
+plt.show()
