@@ -184,3 +184,171 @@ cbar = plt.colorbar(
 )
 cbar.ax.set_yticklabels(["Not important", "Very important"])
 plt.show()
+
+# boosting
+
+from sklearn.ensemble import AdaBoostClassifier
+
+# AdaBoost
+ada_clf = AdaBoostClassifier(
+    DecisionTreeClassifier(max_depth=1),
+    n_estimators=200,
+    algorithm="SAMME.R",
+    learning_rate=0.5,
+    random_state=42,
+)
+ada_clf.fit(X_train, y_train)
+
+# visualización
+plot_decision_boundary(ada_clf, X, y)
+
+from sklearn.tree import DecisionTreeRegressor
+
+# árbol de decisión
+tree_reg1 = DecisionTreeRegressor(max_depth=2, random_state=42)
+tree_reg1.fit(X, y)
+
+# predición
+y2 = y - tree_reg1.predict(X)
+# visualización
+plt.plot(X, y2, ".g")
+
+
+tree_reg2 = DecisionTreeRegressor(max_depth=2, random_state=42)
+tree_reg2.fit(X, y2)
+
+# restamos a la predición anterior
+y3 = y2 - tree_reg2.predict(X)
+plt.plot(X, y3, ".g")
+
+tree_reg3 = DecisionTreeRegressor(max_depth=2, random_state=42)
+tree_reg3.fit(X, y3)
+
+
+def plot_predictions(
+    regressors, X, y, axes, label=None, style="r-", data_style="b.", data_label=None
+):
+    x1 = np.linspace(axes[0], axes[1], 500)
+    y_pred = sum(regressor.predict(x1.reshape(-1, 1)) for regressor in regressors)
+    plt.plot(X[:, 0], y, data_style, label=data_label)
+    plt.plot(x1, y_pred, style, linewidth=2, label=label)
+    if label or data_label:
+        plt.legend(loc="upper center", fontsize=16)
+    plt.axis(axes)
+
+
+plt.figure(figsize=(11, 11))
+
+plt.subplot(321)
+plot_predictions(
+    [tree_reg1],
+    X,
+    y,
+    axes=[-0.5, 0.5, -0.1, 0.8],
+    label="$h_1(x_1)$",
+    style="g-",
+    data_label="Training set",
+)
+plt.ylabel("$y$", fontsize=16, rotation=0)
+plt.title("Residuals and tree predictions", fontsize=16)
+
+plt.subplot(322)
+plot_predictions(
+    [tree_reg1],
+    X,
+    y,
+    axes=[-0.5, 0.5, -0.1, 0.8],
+    label="$h(x_1) = h_1(x_1)$",
+    data_label="Training set",
+)
+plt.ylabel("$y$", fontsize=16, rotation=0)
+plt.title("Ensemble predictions", fontsize=16)
+
+plt.subplot(323)
+plot_predictions(
+    [tree_reg2],
+    X,
+    y2,
+    axes=[-0.5, 0.5, -0.5, 0.5],
+    label="$h_2(x_1)$",
+    style="g-",
+    data_style="k+",
+    data_label="Residuals",
+)
+plt.ylabel("$y - h_1(x_1)$", fontsize=16)
+
+plt.subplot(324)
+plot_predictions(
+    [tree_reg1, tree_reg2],
+    X,
+    y,
+    axes=[-0.5, 0.5, -0.1, 0.8],
+    label="$h(x_1) = h_1(x_1) + h_2(x_1)$",
+)
+plt.ylabel("$y$", fontsize=16, rotation=0)
+
+plt.subplot(325)
+plot_predictions(
+    [tree_reg3],
+    X,
+    y3,
+    axes=[-0.5, 0.5, -0.5, 0.5],
+    label="$h_3(x_1)$",
+    style="g-",
+    data_style="k+",
+)
+plt.ylabel("$y - h_1(x_1) - h_2(x_1)$", fontsize=16)
+plt.xlabel("$x_1$", fontsize=16)
+
+plt.subplot(326)
+plot_predictions(
+    [tree_reg1, tree_reg2, tree_reg3],
+    X,
+    y,
+    axes=[-0.5, 0.5, -0.1, 0.8],
+    label="$h(x_1) = h_1(x_1) + h_2(x_1) + h_3(x_1)$",
+)
+plt.xlabel("$x_1$", fontsize=16)
+plt.ylabel("$y$", fontsize=16, rotation=0)
+
+plt.show()
+
+# gradient boosting
+from sklearn.ensemble import GradientBoostingRegressor
+
+gbrt = GradientBoostingRegressor(
+    max_depth=2, n_estimators=3, learning_rate=1.0, random_state=42
+)
+gbrt.fit(X, y)
+
+
+gbrt_slow = GradientBoostingRegressor(
+    max_depth=2, n_estimators=200, learning_rate=0.1, random_state=42
+)
+gbrt_slow.fit(X, y)
+
+
+fix, axes = plt.subplots(ncols=2, figsize=(10, 4), sharey=True)
+
+plt.sca(axes[0])
+plot_predictions(
+    [gbrt], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="Ensemble predictions"
+)
+plt.title(
+    "learning_rate={}, n_estimators={}".format(gbrt.learning_rate, gbrt.n_estimators),
+    fontsize=14,
+)
+plt.xlabel("$x_1$", fontsize=16)
+plt.ylabel("$y$", fontsize=16, rotation=0)
+
+plt.sca(axes[1])
+plot_predictions([gbrt_slow], X, y, axes=[-0.5, 0.5, -0.1, 0.8])
+plt.title(
+    "learning_rate={}, n_estimators={}".format(
+        gbrt_slow.learning_rate, gbrt_slow.n_estimators
+    ),
+    fontsize=14,
+)
+plt.xlabel("$x_1$", fontsize=16)
+
+plt.show()
