@@ -166,3 +166,55 @@ for X_batch in tqdm(np.array_split(X_train, n_batches)):
     inc_pca.partial_fit(X_batch)
 
 X_reduced = inc_pca.transform(X_train)
+
+# otras técnicas
+from sklearn.datasets import make_swiss_roll
+
+X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=41)
+
+
+from sklearn.manifold import LocallyLinearEmbedding
+
+lle = LocallyLinearEmbedding(n_components=2, n_neighbors=10, random_state=42)
+X_reduced = lle.fit_transform(X)
+
+plt.title("Unrolled swiss roll using LLE", fontsize=14)
+plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
+plt.xlabel("$z_1$", fontsize=18)
+plt.ylabel("$z_2$", fontsize=18)
+plt.axis([-0.065, 0.055, -0.1, 0.12])
+plt.grid(True)
+plt.show()
+
+
+from sklearn.manifold import MDS
+
+mds = MDS(n_components=2, random_state=42)
+X_reduced_mds = mds.fit_transform(X)
+
+from sklearn.manifold import Isomap
+
+isomap = Isomap(n_components=2)
+X_reduced_isomap = isomap.fit_transform(X)
+
+from sklearn.manifold import TSNE
+
+tsne = TSNE(n_components=2, random_state=42)
+X_reduced_tsne = tsne.fit_transform(X)
+
+titles = ["MDS", "Isomap", "t-SNE"]
+
+plt.figure(figsize=(11, 4))
+
+for subplot, title, X_reduced in zip(
+    (131, 132, 133), titles, (X_reduced_mds, X_reduced_isomap, X_reduced_tsne)
+):
+    plt.subplot(subplot)
+    plt.title(title, fontsize=14)
+    plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
+    plt.xlabel("$z_1$", fontsize=18)
+    if subplot == 131:
+        plt.ylabel("$z_2$", fontsize=18, rotation=0)
+    plt.grid(True)
+
+plt.show()
