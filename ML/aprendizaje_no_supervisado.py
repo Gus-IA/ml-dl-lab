@@ -330,3 +330,125 @@ plt.figure(figsize=(6, 3))
 plot_decision_boundaries(knn, X, show_centroids=False)
 plt.scatter(X_new[:, 0], X_new[:, 1], c="b", marker="+", s=200, zorder=10)
 plt.show()
+
+# Gaussian Mixture Models
+X1, y1 = make_blobs(n_samples=1000, centers=((4, -4), (0, 0)), random_state=42)
+X1 = X1.dot(np.array([[0.374, 0.95], [0.732, 0.598]]))
+X2, y2 = make_blobs(n_samples=250, centers=1, random_state=42)
+X2 = X2 + [6, -8]
+X = np.r_[X1, X2]
+y = np.r_[y1, y2]
+plot_clusters(X)
+
+from sklearn.mixture import GaussianMixture
+
+gm = GaussianMixture(n_components=3, n_init=10, random_state=42)
+gm.fit(X)
+
+from matplotlib.colors import LogNorm
+
+
+def plot_gaussian_mixture(clusterer, X, resolution=1000, show_ylabels=True):
+    mins = X.min(axis=0) - 0.1
+    maxs = X.max(axis=0) + 0.1
+    xx, yy = np.meshgrid(
+        np.linspace(mins[0], maxs[0], resolution),
+        np.linspace(mins[1], maxs[1], resolution),
+    )
+    Z = -clusterer.score_samples(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    plt.contourf(
+        xx, yy, Z, norm=LogNorm(vmin=1.0, vmax=30.0), levels=np.logspace(0, 2, 12)
+    )
+    plt.contour(
+        xx,
+        yy,
+        Z,
+        norm=LogNorm(vmin=1.0, vmax=30.0),
+        levels=np.logspace(0, 2, 12),
+        linewidths=1,
+        colors="k",
+    )
+
+    Z = clusterer.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    plt.contour(xx, yy, Z, linewidths=2, colors="r", linestyles="dashed")
+
+    plt.plot(X[:, 0], X[:, 1], "k.", markersize=2)
+    plot_centroids(clusterer.means_, clusterer.weights_)
+
+    plt.xlabel("$x_1$", fontsize=14)
+    if show_ylabels:
+        plt.ylabel("$x_2$", fontsize=14, rotation=0)
+    else:
+        plt.tick_params(labelleft=False)
+
+
+plt.figure(figsize=(8, 4))
+plot_gaussian_mixture(gm, X)
+plt.show()
+
+print(gm.weights_)
+print(gm.means_)
+print(gm.covariances_)
+print(gm.converged_)
+print(gm.n_iter_)
+
+print(gm.predict(X))
+print(gm.predict_proba(X))
+
+X_new, y_new = gm.sample(6)
+print(X_new)
+print(y_new)
+
+# detección de anomalias
+densities = gm.score_samples(X)
+density_threshold = np.percentile(densities, 4)
+anomalies = X[densities < density_threshold]
+
+plt.figure(figsize=(8, 4))
+
+plot_gaussian_mixture(gm, X)
+plt.scatter(anomalies[:, 0], anomalies[:, 1], color="r", marker="*")
+plt.ylim(top=5.1)
+
+plt.show()
+
+# mejor modelo
+gms_per_k = [
+    GaussianMixture(n_components=k, n_init=10, random_state=42).fit(X)
+    for k in range(1, 11)
+]
+
+bics = [model.bic(X) for model in gms_per_k]
+aics = [model.aic(X) for model in gms_per_k]
+
+
+plt.figure(figsize=(8, 3))
+plt.plot(range(1, 11), bics, "bo-", label="BIC")
+plt.plot(range(1, 11), aics, "go--", label="AIC")
+plt.xlabel("$k$", fontsize=14)
+plt.ylabel("Information Criterion", fontsize=14)
+plt.axis([1, 9.5, np.min(aics) - 50, np.max(aics) + 50])
+plt.annotate(
+    "Mínimo",
+    xy=(3, bics[2]),
+    xytext=(0.35, 0.6),
+    textcoords="figure fraction",
+    fontsize=14,
+    arrowprops=dict(facecolor="black", shrink=0.1),
+)
+plt.legend()
+plt.show()
+
+from sklearn.mixture import BayesianGaussianMixture
+
+bgm = BayesianGaussianMixture(n_components=10, n_init=10, random_state=42)
+bgm.fit(X)
+
+np.round(bgm.weights_, 2)
+
+plt.figure(figsize=(8, 5))
+plot_gaussian_mixture(bgm, X)
+plt.show()
