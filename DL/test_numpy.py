@@ -69,3 +69,56 @@ print(a.dtype)
 
 # indicar inicialización
 a = np.arange(1, 5, dtype=np.uint8)
+
+
+def fast(n=1000):
+    p = np.linspace(-1, 1, n)
+    x, y = np.meshgrid(p, p)
+    z = np.sqrt(x**2 + y**2)
+    return x, y, z
+
+
+# vectorización
+
+# calcular valor medio de cada columna
+print(a.mean(axis=0))
+
+a = np.arange(5).reshape(1, 1, 5)
+
+print(a.shape)
+
+b = np.arange(5)
+
+print(b.shape)
+
+print(a + b)
+
+a = np.arange(6).reshape(2, 3)
+
+print(a.shape)
+
+b = np.array([[100], [200]])
+
+print(b.shape)
+
+print(a + b)
+
+# multiplicación
+
+A = np.array([[1, 2, 1], [0, 1, 0], [2, 3, 4]])
+
+B = np.array([[2, 5], [6, 7], [1, 8]])
+
+C = A.dot(B)
+
+C = A @ B
+
+print(C.shape)
+
+import torch
+
+# array numpy
+x = np.array([1, 2, 3])
+
+# tensor pytorch
+x = torch.tensor([1, 2, 3])
