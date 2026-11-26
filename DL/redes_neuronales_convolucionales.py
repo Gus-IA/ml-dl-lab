@@ -77,3 +77,20 @@ output = conv(img_tensor)
 
 # dimensiones: (N, #filtros, H', W')
 output.shape
+
+# pooling
+ix = random.randint(0, len(train_imgs))
+img, label = train_imgs[ix], train_labels[ix]
+
+plt.imshow(img)
+plt.title(classes[label])
+plt.show()
+
+pool = torch.nn.MaxPool2d(3, padding=1, stride=2)
+
+img_tensor = torch.from_numpy(img / 255.0).unsqueeze(0).permute(0, 3, 1, 2).float()
+output = pool(img_tensor)
+output.shape
+
+plt.imshow(output.squeeze(0).permute(1, 2, 0))
+plt.show()
